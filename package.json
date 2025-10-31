@@ -1,0 +1,17 @@
+{
+  "name": "nepconnect",
+  "version": "1.0.0",
+  "description": "Empowering Rural Nepal Through Digital Learning & Services",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [
+    "nepal",
+    "digital-inclusion",
+    "pwa"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -1,0 +1,22 @@
+/* Nepali Color Theme */
+:root {
+  --nepal-crimson: #dc143c;
+  --nepal-blue: #003893;
+  --nepal-white: #ffffff;
+  --himalayan-white: #f8f9fa;
+  --terai-green: #228b22;
+  --hill-green: #2e8b57;
+  --soil-brown: #8b4513;
+  --text-dark: #2d3748;
+  --text-light: #ffffff;
+}
+
+* {
+  font-family: "Noto Sans Devanagari", "Preeti", "Mangal", sans-serif;
+}
+
+body {
+  background-color: var(--himalayan-white);
+  margin: 0;
+  padding: 0;
+}
