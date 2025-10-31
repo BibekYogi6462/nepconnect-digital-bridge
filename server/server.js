@@ -40,8 +40,6 @@ app.get("/", (req, res) => {
 app.use("/api/content", contentRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/content", contentRoutes);
-app.use("/api/news", newsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,19 +1,22 @@
+// src/pages/Auth/Register.jsx
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
+import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    district: "", // Add this
+    village: "", // Add this
     password: "",
-    district: "",
-    village: "",
+    confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const { register } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -24,163 +27,95 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setLoading(true);
+
+    // Basic validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("पासवर्ड मेल खाँदैन");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("पासवर्ड कम्तिमा ६ वर्णको हुनुपर्छ");
+      setLoading(false);
+      return;
+    }
 
     try {
-      await register(formData);
-      // Redirect will be handled by context
+      const result = await register(formData);
+
+      if (result.success) {
+        navigate("/profile");
+      } else {
+        setError(result.error || "दर्ता असफल भयो");
+      }
     } catch (err) {
-      setError(err.message);
+      setError("दर्ता प्रक्रिया असफल भयो");
     } finally {
       setLoading(false);
     }
   };
 
-  const districts = [
-    "काठमाडौं",
-    "ललितपुर",
-    "भक्तपुर",
-    "पोखरा",
-    "बिराटनगर",
-    "बुटवल",
-    "धरान",
-    "नेपालगञ्ज",
-  ];
-
   return (
-    <div
-      style={{
-        maxWidth: "500px",
-        margin: "2rem auto",
-        padding: "2rem",
-        border: "2px solid var(--nepal-blue)",
-        borderRadius: "12px",
-        backgroundColor: "white",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "var(--nepal-blue)",
-          marginBottom: "2rem",
-        }}
-      >
-        नयाँ खाता दर्ता गर्नुहोस्
-      </h2>
-
+    <div style={{ maxWidth: "400px", margin: "2rem auto", padding: "2rem" }}>
+      <h2>खाता दर्ता</h2>
       {error && (
-        <div
-          style={{
-            backgroundColor: "#fed7d7",
-            color: "#c53030",
-            padding: "1rem",
-            borderRadius: "8px",
-            marginBottom: "1rem",
-            textAlign: "center",
-          }}
-        >
-          {error}
-        </div>
+        <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>
       )}
-
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            पूरा नाम
-          </label>
           <input
             type="text"
             name="name"
+            placeholder="पुरा नाम"
             value={formData.name}
             onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
-
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            इमेल ठेगाना
-          </label>
           <input
             type="email"
             name="email"
+            placeholder="इमेल ठेगाना"
             value={formData.email}
             onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
-
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            फोन नम्बर
-          </label>
           <input
             type="tel"
             name="phone"
+            placeholder="फोन नम्बर"
             value={formData.phone}
             onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
 
+        {/* Add District Field */}
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            जिल्ला
-          </label>
           <select
             name="district"
             value={formData.district}
@@ -188,121 +123,96 @@ const Register = () => {
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           >
             <option value="">जिल्ला छान्नुहोस्</option>
-            {districts.map((district) => (
-              <option key={district} value={district}>
-                {district}
-              </option>
-            ))}
+            <option value="kathmandu">काठमाडौं</option>
+            <option value="lalitpur">ललितपुर</option>
+            <option value="bhaktapur">भक्तपुर</option>
+            <option value="kavre">काभ्रेपलाञ्चोक</option>
+            <option value="dhading">धादिङ</option>
+            <option value="nuwakot">नुवाकोट</option>
+            <option value="sindhupalchok">सिन्धुपाल्चोक</option>
+            <option value="rasuwa">रसुवा</option>
+            <option value="dolakha">दोलखा</option>
+            <option value="ramechhap">रामेछाप</option>
+            <option value="sindhuli">सिन्धुली</option>
           </select>
         </div>
 
+        {/* Add Village Field */}
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            गाउँ/नगर
-          </label>
           <input
             type="text"
             name="village"
+            placeholder="गाउँपालिका वा नगरपालिका"
             value={formData.village}
             onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
 
-        <div style={{ marginBottom: "2rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            पासवर्ड
-          </label>
+        <div style={{ marginBottom: "1rem" }}>
           <input
             type="password"
             name="password"
+            placeholder="पासवर्ड"
             value={formData.password}
             onChange={handleChange}
             required
-            minLength="6"
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
-
+        <div style={{ marginBottom: "1rem" }}>
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="पासवर्ड पुष्टि गर्नुहोस्"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
         <button
           type="submit"
           disabled={loading}
           style={{
             width: "100%",
-            backgroundColor: loading ? "#ccc" : "var(--nepal-blue)",
+            padding: "0.75rem",
+            backgroundColor: "#dc2626",
             color: "white",
             border: "none",
-            padding: "12px",
-            borderRadius: "8px",
-            fontSize: "1.1rem",
-            fontWeight: "600",
+            borderRadius: "4px",
             cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.3s ease",
+            fontSize: "1rem",
           }}
         >
-          {loading ? "दर्ता हुँदै..." : "दर्ता गर्नुहोस्"}
+          {loading ? "दर्ता हुदैछ..." : "दर्ता गर्नुहोस्"}
         </button>
       </form>
-
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "1.5rem",
-          paddingTop: "1.5rem",
-          borderTop: "1px solid #e2e8f0",
-        }}
-      >
-        <p style={{ margin: 0, color: "#666" }}>
-          पहिले नै खाता छ?{" "}
-          <a
-            href="/login"
-            style={{
-              color: "var(--nepal-blue)",
-              textDecoration: "none",
-              fontWeight: "600",
-            }}
-          >
-            लगइन गर्नुहोस्
-          </a>
-        </p>
-      </div>
+      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+        पहिले नै खाता छ? <Link to="/login">लगइन गर्नुहोस्</Link>
+      </p>
     </div>
   );
 };

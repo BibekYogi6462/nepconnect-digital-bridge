@@ -1,175 +1,103 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    setLoading(true);
 
     try {
-      await login(email, password);
-      // Redirect will be handled by context
+      const result = await login(formData);
+
+      if (result.success) {
+        navigate("/profile");
+      } else {
+        setError(result.error || "लगइन असफल भयो");
+      }
     } catch (err) {
-      setError(err.message);
+      setError("लगइन प्रक्रिया असफल भयो");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "400px",
-        margin: "2rem auto",
-        padding: "2rem",
-        border: "2px solid var(--nepal-blue)",
-        borderRadius: "12px",
-        backgroundColor: "white",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "var(--nepal-blue)",
-          marginBottom: "2rem",
-        }}
-      >
-        लगइन गर्नुहोस्
-      </h2>
-
+    <div style={{ maxWidth: "400px", margin: "2rem auto", padding: "2rem" }}>
+      <h2>लगइन गर्नुहोस्</h2>
       {error && (
-        <div
-          style={{
-            backgroundColor: "#fed7d7",
-            color: "#c53030",
-            padding: "1rem",
-            borderRadius: "8px",
-            marginBottom: "1rem",
-            textAlign: "center",
-          }}
-        >
-          {error}
-        </div>
+        <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>
       )}
-
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "1rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            इमेल ठेगाना
-          </label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
+            placeholder="इमेल ठेगाना"
+            value={formData.email}
+            onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "var(--nepal-blue)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e2e8f0";
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
-
-        <div style={{ marginBottom: "2rem" }}>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "0.5rem",
-              fontWeight: "600",
-              color: "var(--text-dark)",
-            }}
-          >
-            पासवर्ड
-          </label>
+        <div style={{ marginBottom: "1rem" }}>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            placeholder="पासवर्ड"
+            value={formData.password}
+            onChange={handleChange}
             required
             style={{
               width: "100%",
-              padding: "0.75rem",
-              border: "2px solid #e2e8f0",
-              borderRadius: "8px",
-              fontSize: "1rem",
-              transition: "border-color 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "var(--nepal-blue)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e2e8f0";
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
             }}
           />
         </div>
-
         <button
           type="submit"
           disabled={loading}
           style={{
             width: "100%",
-            backgroundColor: loading ? "#ccc" : "var(--nepal-blue)",
+            padding: "0.75rem",
+            backgroundColor: "#dc2626",
             color: "white",
             border: "none",
-            padding: "12px",
-            borderRadius: "8px",
-            fontSize: "1.1rem",
-            fontWeight: "600",
+            borderRadius: "4px",
             cursor: loading ? "not-allowed" : "pointer",
-            transition: "all 0.3s ease",
+            fontSize: "1rem",
           }}
         >
-          {loading ? "लगइन हुँदै..." : "लगइन गर्नुहोस्"}
+          {loading ? "लगइन हुदैछ..." : "लगइन गर्नुहोस्"}
         </button>
       </form>
-
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "1.5rem",
-          paddingTop: "1.5rem",
-          borderTop: "1px solid #e2e8f0",
-        }}
-      >
-        <p style={{ margin: 0, color: "#666" }}>
-          खाता छैन?{" "}
-          <a
-            href="/register"
-            style={{
-              color: "var(--nepal-blue)",
-              textDecoration: "none",
-              fontWeight: "600",
-            }}
-          >
-            दर्ता गर्नुहोस्
-          </a>
-        </p>
-      </div>
+      <p style={{ textAlign: "center", marginTop: "1rem" }}>
+        खाता छैन? <Link to="/register">दर्ता गर्नुहोस्</Link>
+      </p>
     </div>
   );
 };
