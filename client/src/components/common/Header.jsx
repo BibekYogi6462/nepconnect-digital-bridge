@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-// import { useAuth } from "../../context/AuthContext"
-// import { useAuth } from "../hooks/useAuth.js";
-import { useAuth } from "../../hooks/useAuth.js";
+import { Link } from "react-router-dom"; // Add this import
+import { useAuth } from "../../context/AuthContext"; // Fix the import path
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -36,9 +35,11 @@ const Header = () => {
             gap: "1rem",
           }}
         >
-          <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "700" }}>
-            नेपकनेक्ट
-          </h1>
+          <Link to="/" style={{ textDecoration: "none", color: "white" }}>
+            <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: "700" }}>
+              नेपकनेक्ट
+            </h1>
+          </Link>
           <p style={{ margin: 0, fontSize: "0.9rem", opacity: 0.9 }}>
             गाउँघरलाई डिजिटल सँगै जोड्दै
           </p>
@@ -52,8 +53,8 @@ const Header = () => {
             gap: "2rem",
           }}
         >
-          <a
-            href="/"
+          <Link
+            to="/"
             style={{
               color: "white",
               textDecoration: "none",
@@ -68,10 +69,10 @@ const Header = () => {
             onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
           >
             गृहपृष्ठ
-          </a>
+          </Link>
 
-          <a
-            href="/news"
+          <Link
+            to="/news"
             style={{
               color: "white",
               textDecoration: "none",
@@ -86,10 +87,10 @@ const Header = () => {
             onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
           >
             समाचार
-          </a>
+          </Link>
 
-          <a
-            href="/content"
+          <Link
+            to="/content"
             style={{
               color: "white",
               textDecoration: "none",
@@ -104,7 +105,7 @@ const Header = () => {
             onMouseOut={(e) => (e.target.style.backgroundColor = "transparent")}
           >
             सामग्री
-          </a>
+          </Link>
 
           {/* User Menu */}
           {user ? (
@@ -142,8 +143,8 @@ const Header = () => {
                     minWidth: "150px",
                   }}
                 >
-                  <a
-                    href="/profile"
+                  <Link
+                    to="/profile"
                     style={{
                       display: "block",
                       padding: "0.75rem 1rem",
@@ -160,7 +161,7 @@ const Header = () => {
                     }
                   >
                     प्रोफाइल
-                  </a>
+                  </Link>
                   <button
                     onClick={logout}
                     style={{
@@ -188,8 +189,8 @@ const Header = () => {
             </div>
           ) : (
             <div style={{ display: "flex", gap: "1rem" }}>
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -209,10 +210,10 @@ const Header = () => {
                 }}
               >
                 लगइन
-              </a>
+              </Link>
 
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 style={{
                   backgroundColor: "white",
                   color: "var(--nepal-crimson)",
@@ -232,7 +233,7 @@ const Header = () => {
                 }}
               >
                 दर्ता
-              </a>
+              </Link>
             </div>
           )}
         </nav>
