@@ -4,7 +4,9 @@ import {
   getContentByCategory,
   getContentById,
   downloadContent,
+  createContent,
 } from "../controllers/contentController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -19,5 +21,8 @@ router.get("/:id", getContentById);
 
 // POST /api/content/:id/download - Track download
 router.post("/:id/download", downloadContent);
+
+// POST /api/content - Create new content (protected)
+router.post("/", protect, createContent);
 
 export default router;

@@ -1,5 +1,61 @@
 import Content from "../models/Content.js";
 
+// Create new content
+export const createContent = async (req, res) => {
+  try {
+    const {
+      title,
+      titleEnglish,
+      description,
+      type,
+      category,
+      fileUrl,
+      fileSize,
+      duration,
+      isOfflineAvailable,
+      language,
+      level,
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !titleEnglish || !description || !type || !category) {
+      return res.status(400).json({
+        success: false,
+        message: "कृपया सबै आवश्यक फिल्डहरू भर्नुहोस्",
+      });
+    }
+
+    // Create content
+    const content = await Content.create({
+      title,
+      titleEnglish,
+      description,
+      type,
+      category,
+      fileUrl: fileUrl || "",
+      fileSize: fileSize || 0,
+      duration: duration || "",
+      isOfflineAvailable:
+        isOfflineAvailable !== undefined ? isOfflineAvailable : true,
+      language: language || "nepali",
+      level: level || "सुरुआती",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "सामग्री सफलतापूर्वक सिर्जना गरियो",
+      data: content,
+    });
+  } catch (error) {
+    console.error("Create content error:", error);
+    res.status(400).json({
+      success: false,
+      message: "सामग्री सिर्जना गर्न असफल",
+      error: error.message,
+    });
+  }
+};
+
 // Get all content
 export const getContent = async (req, res) => {
   try {

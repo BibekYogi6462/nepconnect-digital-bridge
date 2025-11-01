@@ -84,8 +84,33 @@ export const getNewsById = async (req, res) => {
 // Create new news
 export const createNews = async (req, res) => {
   try {
-    const news = new News(req.body);
-    await news.save();
+    const {
+      title,
+      titleEnglish,
+      description,
+      descriptionEnglish,
+      category,
+      date,
+      createdBy,
+    } = req.body;
+
+    // Validate required fields
+    if (!title || !titleEnglish || !description || !category || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "कृपया सबै आवश्यक फिल्डहरू भर्नुहोस्",
+      });
+    }
+
+    const news = await News.create({
+      title,
+      titleEnglish,
+      description,
+      descriptionEnglish: descriptionEnglish || "",
+      category,
+      date,
+      createdBy: createdBy || "सिस्टम",
+    });
 
     res.status(201).json({
       success: true,

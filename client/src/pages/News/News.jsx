@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { newsAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 const News = () => {
+  const { user } = useAuth();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    titleEnglish: "",
+    description: "",
+    descriptionEnglish: "",
+    category: "रोजगारी",
+    date: getCurrentNepaliDate(),
+  });
+  const [creating, setCreating] = useState(false);
+
+  const API_URL = "http://localhost:5000/api";
 
   const categories = [
     { value: "all", label: "सबै समाचार" },
@@ -13,7 +26,35 @@ const News = () => {
     { value: "कृषि", label: "कृषि" },
     { value: "स्वास्थ्य", label: "स्वास्थ्य" },
     { value: "शिक्षा", label: "शिक्षा" },
+    { value: "अन्य", label: "अन्य" },
   ];
+
+  // Helper function to get current Nepali date (simplified)
+  function getCurrentNepaliDate() {
+    const today = new Date();
+    const year = today.getFullYear() - 57; // Convert to Nepali year (approx)
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    return `${year} ${getNepaliMonth(month)} ${day}`;
+  }
+
+  function getNepaliMonth(month) {
+    const months = [
+      "बैशाख",
+      "जेठ",
+      "असार",
+      "श्रावण",
+      "भाद्र",
+      "आश्विन",
+      "कार्तिक",
+      "मंसिर",
+      "पुष",
+      "माघ",
+      "फागुन",
+      "चैत्र",
+    ];
+    return months[month - 1] || "चैत्र";
+  }
 
   useEffect(() => {
     fetchNews();
@@ -22,18 +63,77 @@ const News = () => {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      let response;
-      if (selectedCategory === "all") {
-        response = await newsAPI.getAll();
-      } else {
-        response = await newsAPI.getByCategory(selectedCategory);
+      setError(null);
+
+      let url = `${API_URL}/news`;
+      if (selectedCategory !== "all") {
+        url = `${API_URL}/news/category/${selectedCategory}`;
       }
-      setNews(response.data);
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setNews(result.data || []);
+      } else {
+        throw new Error(result.message || "समाचार लोड गर्न असफल");
+      }
     } catch (err) {
       setError(err.message);
       console.error("Failed to fetch news:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateNews = async (e) => {
+    e.preventDefault();
+    try {
+      setCreating(true);
+      setError(null);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/news`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          createdBy: user?.name || "प्रयोगकर्ता",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Add new news to the list
+        setNews((prevNews) => [result.data, ...prevNews]);
+        // Reset form
+        setFormData({
+          title: "",
+          titleEnglish: "",
+          description: "",
+          descriptionEnglish: "",
+          category: "रोजगारी",
+          date: getCurrentNepaliDate(),
+        });
+        setShowCreateForm(false);
+        alert("समाचार सफलतापूर्वक सिर्जना गरियो!");
+      } else {
+        throw new Error(result.message || "समाचार सिर्जना गर्न असफल");
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Create news failed:", err);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -43,6 +143,7 @@ const News = () => {
       कृषि: "var(--terai-green)",
       स्वास्थ्य: "var(--nepal-blue)",
       शिक्षा: "var(--hill-green)",
+      अन्य: "var(--soil-brown)",
     };
     return colors[category] || "var(--soil-brown)";
   };
@@ -56,6 +157,7 @@ const News = () => {
           alignItems: "center",
           height: "50vh",
           fontSize: "1.2rem",
+          color: "#666",
         }}
       >
         समाचार लोड हुँदैछ...
@@ -64,7 +166,8 @@ const News = () => {
   }
 
   return (
-    <div>
+    <div style={{ padding: "2rem 0" }}>
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -88,39 +191,324 @@ const News = () => {
           📢 समाचार र सूचनाहरू
         </h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            flexWrap: "wrap",
-          }}
-        >
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setSelectedCategory(cat.value)}
-              style={{
-                backgroundColor:
-                  selectedCategory === cat.value
-                    ? "var(--nepal-blue)"
-                    : "white",
-                color:
-                  selectedCategory === cat.value
-                    ? "white"
-                    : "var(--nepal-blue)",
-                border: "2px solid var(--nepal-blue)",
-                padding: "8px 16px",
-                borderRadius: "20px",
-                fontSize: "0.9rem",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-              }}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          {/* Category Filter */}
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+            }}
+          >
+            {categories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setSelectedCategory(cat.value)}
+                style={{
+                  backgroundColor:
+                    selectedCategory === cat.value
+                      ? "var(--nepal-blue)"
+                      : "white",
+                  color:
+                    selectedCategory === cat.value
+                      ? "white"
+                      : "var(--nepal-blue)",
+                  border: "2px solid var(--nepal-blue)",
+                  padding: "8px 16px",
+                  borderRadius: "20px",
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                }}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Create News Button (for authorized users) */}
+          {user &&
+            (user.role === "admin" ||
+              user.role === "community_coordinator") && (
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                style={{
+                  backgroundColor: "var(--nepal-crimson)",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                ➕ नयाँ समाचार
+              </button>
+            )}
         </div>
       </div>
+
+      {/* Create News Form */}
+      {showCreateForm &&
+        user &&
+        (user.role === "admin" || user.role === "community_coordinator") && (
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "2rem",
+              borderRadius: "12px",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              marginBottom: "2rem",
+              border: "2px solid var(--nepal-crimson)",
+            }}
+          >
+            <h3
+              style={{ color: "var(--nepal-crimson)", marginBottom: "1.5rem" }}
+            >
+              नयाँ समाचार सिर्जना गर्नुहोस्
+            </h3>
+
+            <form onSubmit={handleCreateNews}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                  marginBottom: "1rem",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    शीर्षक (नेपाली) *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "1px solid #ccc",
+                      borderRadius: "6px",
+                      fontSize: "1rem",
+                    }}
+                    placeholder="नेपाली शीर्षक लेख्नुहोस्"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Title (English) *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.titleEnglish}
+                    onChange={(e) =>
+                      setFormData({ ...formData, titleEnglish: e.target.value })
+                    }
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "1px solid #ccc",
+                      borderRadius: "6px",
+                      fontSize: "1rem",
+                    }}
+                    placeholder="English title"
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontWeight: "600",
+                  }}
+                >
+                  विवरण (नेपाली) *
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  required
+                  rows="3"
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #ccc",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                    resize: "vertical",
+                  }}
+                  placeholder="समाचारको विवरण लेख्नुहोस्"
+                />
+              </div>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontWeight: "600",
+                  }}
+                >
+                  Description (English)
+                </label>
+                <textarea
+                  value={formData.descriptionEnglish}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      descriptionEnglish: e.target.value,
+                    })
+                  }
+                  rows="2"
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #ccc",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                    resize: "vertical",
+                  }}
+                  placeholder="English description (optional)"
+                />
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                  marginBottom: "1.5rem",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    श्रेणी *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "1px solid #ccc",
+                      borderRadius: "6px",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {categories
+                      .filter((cat) => cat.value !== "all")
+                      .map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontWeight: "600",
+                    }}
+                  >
+                    मिति *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "1px solid #ccc",
+                      borderRadius: "6px",
+                      fontSize: "1rem",
+                    }}
+                    placeholder="२०८० पुष १५"
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  style={{
+                    backgroundColor: "#666",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  रद्द गर्नुहोस्
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  style={{
+                    backgroundColor: "var(--nepal-crimson)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                    cursor: creating ? "not-allowed" : "pointer",
+                    opacity: creating ? 0.7 : 1,
+                  }}
+                >
+                  {creating ? "सिर्जना हुँदैछ..." : "समाचार सिर्जना गर्नुहोस्"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
       {error && (
         <div
@@ -137,6 +525,7 @@ const News = () => {
         </div>
       )}
 
+      {/* News Grid */}
       <div
         style={{
           display: "grid",
@@ -146,7 +535,7 @@ const News = () => {
       >
         {news.map((newsItem) => (
           <div
-            key={newsItem._id || newsItem.id}
+            key={newsItem._id}
             style={{
               border: "2px solid #e2e8f0",
               borderRadius: "12px",
@@ -155,14 +544,6 @@ const News = () => {
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
               transition: "all 0.3s ease",
               position: "relative",
-            }}
-            onMouseOver={(e) => {
-              e.target.style.transform = "translateY(-5px)";
-              e.target.style.boxShadow = "0 8px 15px rgba(0,0,0,0.15)";
-            }}
-            onMouseOut={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
             }}
           >
             {newsItem.isNew && (
@@ -261,15 +642,6 @@ const News = () => {
                   borderRadius: "6px",
                   fontSize: "0.9rem",
                   cursor: "pointer",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = "var(--nepal-blue)";
-                  e.target.style.color = "white";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = "transparent";
-                  e.target.style.color = "var(--nepal-blue)";
                 }}
               >
                 पूरै पढ्नुहोस्
@@ -285,9 +657,12 @@ const News = () => {
             textAlign: "center",
             padding: "3rem",
             color: "#666",
+            fontSize: "1.1rem",
           }}
         >
-          कुनै समाचार भेटिएन
+          {selectedCategory === "all"
+            ? "कुनै समाचार भेटिएन। पहिलो समाचार सिर्जना गर्नुहोस्!"
+            : "यो श्रेणीमा कुनै समाचार भेटिएन।"}
         </div>
       )}
     </div>
